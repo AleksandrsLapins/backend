@@ -10,7 +10,7 @@ const db = mysql.createConnection({
     user: 'codeigniter',
     host: 'localhost',
     password: 'codeigniter2019',
-    database: 'SISIII2024_ 76230034'
+    database: 'SISIII2024_76230034'
 })
 
 app.post('/signup', (req, res) => {
@@ -84,7 +84,7 @@ app.get(`/attractions/:id`, (req, res) => {
 
 app.get(`/comments/:id`, (req, res) => {
     const attractionId = req.params.id;
-    const sql = 'SELECT c.*, r.Nickname FROM Comments c, Registered_users r WHERE Attractions_id = ? AND r.RGid = c.Users_id';
+    const sql = 'SELECT c.*, r.Nickname FROM Comments c, Registered_users r WHERE Attractions = ? AND r.RGid = c.Users';
 
     db.query(sql, [attractionId], (err, result) => {
         if (err) {
@@ -102,7 +102,7 @@ app.get(`/comments/:id`, (req, res) => {
 
 app.get(`/review/:id`, (req, res) => {
     const reviewid = req.params.id;
-    const sql = 'SELECT * FROM `Review` WHERE Attractions_id = ?';
+    const sql = 'SELECT * FROM Review r, Attractions a WHERE a.Aid = ? AND a.Reviews=r.Rid';
 
     db.query(sql, [reviewid], (err, result) => {
         if (err) {
@@ -142,7 +142,7 @@ app.post('/addcomment', (req, res) => {
 
     console.log(Content, Nickname, Attractions_id);
 
-    const sql = 'INSERT INTO Comments (Content, Date, Users_id, Attractions_id) VALUES (?, NOW(), (Select RGid FROM Registered_users WHERE Nickname = ?), ?)';
+    const sql = 'INSERT INTO Comments (Content, Date, Users, Attractions) VALUES (?, NOW(), (Select RGid FROM Registered_users WHERE Nickname = ?), ?)';
     db.query(sql, [Content, Nickname, Attractions_id], (err, result) => {
       if (err) {
         console.error('Error inserting user:', err);
@@ -171,6 +171,33 @@ app.get('/home', (req, res) => {
         }
     });
 });
+
+app.get('/volunteer', (req, res) => {
+    const sql = 'SELECT * FROM `Volunteer`';
+
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error('Error fetching attractions:', err);
+            res.status(500).json({ message: 'Error fetching attractions', error: err.message });
+        } else {
+            res.json(result);
+        }
+    });
+});
+
+app.get('/eco_offers', (req, res) => {
+    const sql = 'SELECT * FROM `Eco_offers`';
+
+    db.query(sql, (err, result) => {
+        if (err) {
+            console.error('Error fetching attractions:', err);
+            res.status(500).json({ message: 'Error fetching attractions', error: err.message });
+        } else {
+            res.json(result);
+        }
+    });
+});
+
 
 app.listen(8081, () => {
     console.log('Server running on port 8081');
