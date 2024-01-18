@@ -100,24 +100,6 @@ app.get(`/comments/:id`, (req, res) => {
     });
 });
 
-app.get(`/review/:id`, (req, res) => {
-    const reviewid = req.params.id;
-    const sql = 'SELECT * FROM Review r, Attractions a WHERE a.Aid = ? AND a.Reviews=r.Rid';
-
-    db.query(sql, [reviewid], (err, result) => {
-        if (err) {
-            console.error('Error fetching Review details:', err);
-            res.status(500).json({ message: 'Error fetching Review details', error: err.message });
-        } else {
-            if (result.length > 0) {
-                res.json(result); 
-            } else {
-                res.status(404).json({ message: 'Review not found' });
-            }
-        }
-    });
-});
-
 app.get(`/attractions/:id`, (req, res) => {
     const attractionId = req.params.id;
     const sql = 'SELECT * FROM `Attractions` WHERE Aid = ?';
@@ -159,6 +141,25 @@ app.post('/addcomment', (req, res) => {
     );
   });
 
+  app.delete('/comments/:commentId', (req, res) => {
+    const commentId = req.params.commentId;
+
+    const sql = 'DELETE FROM Comments WHERE Cid = ?';
+
+    db.query(sql, [commentId], (err, result) => {
+        if (err) {
+            console.error('Error deleting comment:', err);
+            res.status(500).json({ message: 'Error deleting comment', error: err.message });
+        } else {
+            if (result.affectedRows > 0) {
+                res.json({ message: 'Comment deleted successfully' });
+            } else {
+                res.status(404).json({ message: 'Comment not found' });
+            }
+        }
+    });
+});
+
 app.get('/home', (req, res) => {
     const sql = 'SELECT * FROM `Attractions`';
 
@@ -173,25 +174,45 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/volunteer', (req, res) => {
-    const sql = 'SELECT * FROM `Volunteer`';
+    const sql = 'SELECT * FROM Volunteer_work';
 
     db.query(sql, (err, result) => {
         if (err) {
-            console.error('Error fetching attractions:', err);
-            res.status(500).json({ message: 'Error fetching attractions', error: err.message });
+            console.error('Error fetching volunteer:', err);
+            res.status(500).json({ message: 'Error fetching volungeer', error: err.message });
         } else {
             res.json(result);
         }
     });
 });
 
+app.get(`/volunteer/:id`, (req, res) => {
+    const volunteerID = req.params.id;
+    const sql = 'SELECT * FROM `Volunteer_work` WHERE Vid = ?';
+
+    db.query(sql, [volunteerID], (err, result) => {
+        if (err) {
+            console.error('Error fetching volunteer details:', err);
+            res.status(500).json({ message: 'Error fetching volunteer details', error: err.message });
+        } else {
+            if (result.length > 0) {
+                res.json(result[0]); // Assuming there's only one attraction with the given ID
+            } else {
+                res.status(404).json({ message: 'Volunteer not found' });
+            }
+        }
+    });
+
+});
+
+
 app.get('/eco_offers', (req, res) => {
-    const sql = 'SELECT * FROM `Eco_offers`';
+    const sql = 'SELECT e.*, r.Nickname FROM `Eco_offers` e, Registered_users r WHERE e.Users_id = r.RGid';
 
     db.query(sql, (err, result) => {
         if (err) {
-            console.error('Error fetching attractions:', err);
-            res.status(500).json({ message: 'Error fetching attractions', error: err.message });
+            console.error('Error fetching eco_offers:', err);
+            res.status(500).json({ message: 'Error fetching ec_offers', error: err.message });
         } else {
             res.json(result);
         }
