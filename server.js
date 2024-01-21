@@ -13,7 +13,7 @@ const db = mysql.createConnection({
     database: 'SISIII2024_76230034'
 })
 
-app.post('/signup', (req, res) => {
+app.post('/signup2', (req, res) => {
     const { name, surname, nickname, password } = req.body;
   
     const sql = 'INSERT INTO Registered_users (name, surname, nickname, password) VALUES (?, ?, ?, ?)';
@@ -33,7 +33,7 @@ app.post('/signup', (req, res) => {
   });
 
 
-  app.post('/login', (req, res) => {
+  app.post('/login2', (req, res) => {
     const { nickname, password } = req.body;
 
     const sql = 'SELECT * FROM Registered_users WHERE nickname = ? AND password = ?';
@@ -72,7 +72,7 @@ app.post('/updateUser', (req, res) => {
     });
 });
 
-app.get('/attractions', (req, res) => {
+app.get('/attractions2', (req, res) => {
     const sql = 'SELECT A.*, (SELECT AVG(R.Ratings) FROM Ratings R WHERE R.Attractions = A.Aid) AS average_rating, (SELECT COUNT(*) FROM Ratings R WHERE R.Attractions = A.Aid) AS total_ratings FROM Attractions A;';
 
     db.query(sql, (err, result) => {
@@ -85,7 +85,7 @@ app.get('/attractions', (req, res) => {
     });
 });
 
-app.get(`/attractions/:id`, (req, res) => {
+app.get(`/attractions2/:id`, (req, res) => {
     const attractionId = req.params.id;
     const sql = 'SELECT * FROM `Attractions` WHERE Aid = ?';
 
@@ -121,7 +121,7 @@ app.get(`/comments/:id`, (req, res) => {
     });
 });
 
-app.get(`/attractions/:id`, (req, res) => {
+app.get(`/attractions2/:id`, (req, res) => {
     const attractionId = req.params.id;
     const sql = 'SELECT * FROM `Attractions` WHERE Aid = ?';
 
@@ -222,7 +222,7 @@ app.post('/addcomment', (req, res) => {
     });
 });
 
-app.get('/home', (req, res) => {
+app.get('/home2', (req, res) => {
     const sql = 'SELECT * FROM `Attractions`';
 
     db.query(sql, (err, result) => {
@@ -235,7 +235,7 @@ app.get('/home', (req, res) => {
     });
 });
 
-app.get('/volunteer', (req, res) => {
+app.get('/volunteer2', (req, res) => {
     const sql = 'SELECT V.*, (SELECT AVG(R.Ratings) FROM Ratings R WHERE R.Volunteer = V.Vid) AS average_rating, (SELECT COUNT(*) FROM Ratings R WHERE R.Volunteer = V.Vid) AS total_ratings FROM Volunteer_work V';
 
     db.query(sql, (err, result) => {
@@ -248,7 +248,7 @@ app.get('/volunteer', (req, res) => {
     });
 });
 
-app.get(`/volunteer/:id`, (req, res) => {
+app.get(`/volunteer2/:id`, (req, res) => {
     const volunteerID = req.params.id;
     const sql = 'SELECT * FROM `Volunteer_work` WHERE Vid = ?';
 
@@ -268,7 +268,7 @@ app.get(`/volunteer/:id`, (req, res) => {
 });
 
 
-app.get('/eco_offers', (req, res) => {
+app.get('/eco_offers2', (req, res) => {
     const sql = 'SELECT e.*, r.Nickname, (SELECT AVG(rat.Ratings) FROM Ratings rat WHERE rat.Eco_offers = e.EOid) AS average_rating, (SELECT COUNT(*) FROM Ratings rat WHERE rat.Eco_offers = e.EOid) AS total_ratings FROM `Eco_offers` e, Registered_users r WHERE e.Users_id = r.RGid';
 
 
@@ -370,6 +370,20 @@ app.post('/ecoratings', (req, res) => {
       }
     );
   });
+
+
+
+const path = require('path')
+console.log(__dirname)
+app.use(express.static(path.join(__dirname, "build")))
+app.use(express.static(path.join(__dirname, "uploads")))
+
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "build", "index.html")) 
+})
+
+
+
 
 app.listen(8081, () => {
     console.log('Server running on port 8081');
