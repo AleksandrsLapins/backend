@@ -51,8 +51,29 @@ app.post('/signup', (req, res) => {
     });
 });
 
+app.post('/updateUser', (req, res) => {
+    const [ name, surname,  password, nickname ] = req.body;
+
+    console.log(name, surname,  password, nickname);
+
+    const sql = 'UPDATE Registered_users SET name=?, surname=?,  password=? WHERE Nickname=?';
+
+    db.query(sql, [name, surname, password, nickname], (err, result) => {
+        if (err) {
+            console.error('Error updating user:', err);
+            res.status(500).json({ message: 'Error updating user', error: err.message });
+        } else {
+            if (result.affectedRows > 0) {
+                res.json({ message: 'User updated successfully' });
+            } else {
+                res.status(404).json({ message: 'User not found' });
+            }
+        }
+    });
+});
+
 app.get('/attractions', (req, res) => {
-    const sql = 'SELECT * FROM `Attractions`';
+    const sql = 'SELECT A.*, (SELECT AVG(R.Ratings) FROM Ratings R WHERE R.Attractions = A.Aid) AS average_rating, (SELECT COUNT(*) FROM Ratings R WHERE R.Attractions = A.Aid) AS total_ratings FROM Attractions A;';
 
     db.query(sql, (err, result) => {
         if (err) {
@@ -119,6 +140,47 @@ app.get(`/attractions/:id`, (req, res) => {
 
 });
 
+
+app.get(`/AttractionsRatings/:id`, (req, res) => {
+    const attractionId = req.params.id;
+    const attractionId2 = req.params.id;
+    const attractionId3 = req.params.id;
+    const sql = 'SELECT *, (SELECT AVG(Ratings) FROM Ratings WHERE Attractions = ?) AS average_rating, (SELECT COUNT(*) FROM Ratings WHERE Attractions = ?) AS total_ratings FROM Ratings WHERE Attractions = ?';
+
+    db.query(sql, [attractionId, attractionId2, attractionId3], (err, result) => {
+        if (err) {
+            console.error('Error fetching attraction ratings details:', err);
+            res.status(500).json({ message: 'Error fetching attraction ratings details', error: err.message });
+        } else {
+            if (result.length > 0) {
+                res.json(result); 
+            } else {
+                res.status(404).json({ message: 'Attraction ratings not found' });
+            }
+        }
+    });
+});
+
+app.get(`/VolunteerRatings/:id`, (req, res) => {
+    const volunteerId = req.params.id;
+    const volunteerId2 = req.params.id;
+    const volunteerId3 = req.params.id;
+    const sql = 'SELECT *, (SELECT AVG(Ratings) FROM Ratings WHERE Volunteer= ?) AS average_rating, (SELECT COUNT(*) FROM Ratings WHERE Volunteer = ?) AS total_ratings FROM Ratings WHERE Volunteer = ?';
+
+    db.query(sql, [volunteerId, volunteerId2, volunteerId3], (err, result) => {
+        if (err) {
+            console.error('Error fetching volunteer ratings details:', err);
+            res.status(500).json({ message: 'Error fetching volunteer ratings details', error: err.message });
+        } else {
+            if (result.length > 0) {
+                res.json(result); 
+            } else {
+                res.status(404).json({ message: 'Volunteer ratings not found' });
+            }
+        }
+    });
+});
+
 app.post('/addcomment', (req, res) => {
     const { Content, Nickname, Attractions_id } = req.body;
 
@@ -174,7 +236,7 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/volunteer', (req, res) => {
-    const sql = 'SELECT * FROM Volunteer_work';
+    const sql = 'SELECT V.*, (SELECT AVG(R.Ratings) FROM Ratings R WHERE R.Volunteer = V.Vid) AS average_rating, (SELECT COUNT(*) FROM Ratings R WHERE R.Volunteer = V.Vid) AS total_ratings FROM Volunteer_work V';
 
     db.query(sql, (err, result) => {
         if (err) {
@@ -207,7 +269,8 @@ app.get(`/volunteer/:id`, (req, res) => {
 
 
 app.get('/eco_offers', (req, res) => {
-    const sql = 'SELECT e.*, r.Nickname FROM `Eco_offers` e, Registered_users r WHERE e.Users_id = r.RGid';
+    const sql = 'SELECT e.*, r.Nickname, (SELECT AVG(rat.Ratings) FROM Ratings rat WHERE rat.Eco_offers = e.EOid) AS average_rating, (SELECT COUNT(*) FROM Ratings rat WHERE rat.Eco_offers = e.EOid) AS total_ratings FROM `Eco_offers` e, Registered_users r WHERE e.Users_id = r.RGid';
+
 
     db.query(sql, (err, result) => {
         if (err) {
@@ -219,6 +282,94 @@ app.get('/eco_offers', (req, res) => {
     });
 });
 
+app.post('/addeco', (req, res) => {
+    const { Content, Nickname, City } = req.body;
+
+    console.log(Content, Nickname, City);
+
+    const sql = 'INSERT INTO Eco_offers (Content, City, Users_id) VALUES (?,  ?,  (Select RGid FROM Registered_users WHERE Nickname = ?))';
+    db.query(sql, [Content , City , Nickname], (err, result) => {
+      if (err) {
+        console.error('Error inserting eco offers:', err);
+
+        if (!err.sqlMessage) {
+            throw err;
+        }
+
+        res.status(500).json({ message: 'Error adding eco offers', error: err.message });
+      } else {
+        res.status(200).json({ message: 'Eco offers adding' });
+      }
+      }
+    );
+  });
+
+
+app.post('/ecoratings', (req, res) => {
+    const [ nickname, EOid, rating] = req.body;
+
+    console.log( nickname, EOid, rating);
+
+    const sql = 'INSERT INTO Ratings (Ratings,  Users, Eco_offers) VALUES (?, (Select RGid FROM Registered_users WHERE Nickname = ?), ?)';
+    db.query(sql, [rating, nickname, EOid], (err, result) => {
+      if (err) {
+        console.error('Error inserting ratings eco_offers:', err);
+
+        if (!err.sqlMessage) {
+            throw err;
+        }
+
+        res.status(500).json({ message: 'Error adding ratingst', error: err.message });
+      } else {
+        res.status(200).json({ message: 'Comment ratings' });
+      }
+      }
+    );
+  });
+
+  app.post('/attractionsratings', (req, res) => {
+    const [ nickname, Aid, rating] = req.body;
+
+    console.log( nickname, Aid, rating);
+
+    const sql = 'INSERT INTO Ratings (Ratings,  Users, Attractions) VALUES (?, (Select RGid FROM Registered_users WHERE Nickname = ?), ?)';
+    db.query(sql, [rating, nickname, Aid], (err, result) => {
+      if (err) {
+        console.error('Error inserting ratings attractions:', err);
+
+        if (!err.sqlMessage) {
+            throw err;
+        }
+
+        res.status(500).json({ message: 'Error adding ratings', error: err.message });
+      } else {
+        res.status(200).json({ message: 'Comment ratings' });
+      }
+      }
+    );
+  });
+
+  app.post('/volunteerratings', (req, res) => {
+    const [ nickname, Vid, rating] = req.body;
+
+    console.log( nickname, Vid, rating);
+
+    const sql = 'INSERT INTO Ratings (Ratings,  Users, Volunteer) VALUES (?, (Select RGid FROM Registered_users WHERE Nickname = ?), ?)';
+    db.query(sql, [rating, nickname, Vid], (err, result) => {
+      if (err) {
+        console.error('Error inserting ratings attractions:', err);
+
+        if (!err.sqlMessage) {
+            throw err;
+        }
+
+        res.status(500).json({ message: 'Error adding ratings', error: err.message });
+      } else {
+        res.status(200).json({ message: 'Comment ratings' });
+      }
+      }
+    );
+  });
 
 app.listen(8081, () => {
     console.log('Server running on port 8081');
